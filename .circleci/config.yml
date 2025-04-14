@@ -1,0 +1,32 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: circleci/node:16
+    steps:
+      - checkout
+      - run:
+          name: Install npm dependencies
+          command: |
+            npm install --save
+
+  build_docker_image:
+    docker:
+      - image: circleci/node:16
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Build docker image
+          command: |
+            docker build -t web-app-ci -t crane554/web-app-ci .
+            echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
+            docker push crane554/web-app-ci
+
+workflows:
+  build-test:
+    jobs:
+      - test
+      - build_docker_image
